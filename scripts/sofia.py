@@ -9,9 +9,14 @@ from core.notes import index_to_note
 from core.audio import NotePlayer
 
 note_player = NotePlayer()
-stable_label = "No hand"
-candidate = "No hand"
-count = 0
+
+right_stable_label = "No hand"
+right_candidate = "No hand"
+right_count = 0
+
+left_stable_label = "No hand"
+left_candidate = "No hand"
+left_count = 0
 
 
 BaseOptions = mp.tasks.BaseOptions
@@ -22,7 +27,7 @@ VisionRunningMode = vision.RunningMode
 options = HandLandmarkerOptions(
     base_options=BaseOptions(model_asset_path="assets/hand_landmarker.task"),
     running_mode=VisionRunningMode.IMAGE,
-    num_hands=1
+    num_hands=2
 )
 
 detector = HandLandmarker.create_from_options(options)
@@ -52,29 +57,52 @@ while True:
 
     result = detector.detect(mp_image)
 
-    label = "No hand"
+    right_label = "No hand"
+    left_label = "No hand"
 
     if result.hand_landmarks:
-        hand = result.hand_landmarks[0]
-        pts = [(lm.x, lm.y, lm.z) for lm in hand]
-        label = classify(pts)
+        hands = result.hand_landmarks
+        for i, hand in enumerate(result.hand_landmarks):
+            pts = [(lm.x, lm.y, lm.z) for lm in hand]
+            if result.handedness[i][0].display_name == "Right":
+                left_label = classify(pts)
+            elif result.handedness[i][0].display_name == "Left":
+                right_label = classify(pts)
 
-    cv2.putText(frame, label, (30, 50),
+    cv2.putText(frame, "LH: " + left_label + ", RH: " + right_label, (30, 50),
                 cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     
-    if label == candidate:
-        count += 1
+    # right hand stability
+    if right_label == right_candidate:
+        right_count += 1
     else:
-        candidate = label
-        count = 1
+        right_candidate = right_label
+        right_count = 1
 
-    if count >= 3:
-        stable_label = candidate
+    if right_count >= 3:
+        right_stable_label = right_candidate
     
-    if stable_label != "No hand":
-        note_player.play_note(stable_label)
+    if right_stable_label != "No hand":
+        note_player.play_note("right", right_stable_label)
     else:
-        note_player.stop_note()
+        note_player.stop_note("right")
+
+
+    # left hand stability
+
+    if left_label == left_candidate:
+        left_count += 1
+    else:
+        left_candidate = left_label
+        left_count = 1
+
+    if left_count >= 3:
+        left_stable_label = left_candidate
+    
+    if left_stable_label != "No hand":
+        note_player.play_note("left", left_stable_label)
+    else:
+        note_player.stop_note("left")
 
     cv2.imshow("Hand", frame)
 

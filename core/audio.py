@@ -9,32 +9,44 @@ class NotePlayer:
         self.fs.start()
 
         self.sfid = self.fs.sfload("assets/soundfonts/198_Juno106_LeadSynth.sf2")
-        self.fs.program_select(0, self.sfid, 0, 0)
 
-        self.current_note = None
+        # Use TWO separate MIDI channels
+        self.left_channel = 0
+        self.right_channel = 1
 
-    def play_note(self, note):
+        self.fs.program_select(self.left_channel, self.sfid, 0, 0)
+        self.fs.program_select(self.right_channel, self.sfid, 0, 0)
+
+        self.active_notes = {
+            "left": None,
+            "right": None
+        }
+
+    def play_note(self, hand, note):
         midi = NOTES.get(note)
         if midi is None:
             return
 
-        # Already playing this note
-        if self.current_note == midi:
+        channel = self.left_channel if hand == "left" else self.right_channel
+
+        # stop only that hand's note
+        if self.active_notes[hand] == midi:
             return
 
-        # Stop previous note
-        if self.current_note is not None:
-            self.fs.noteoff(0, self.current_note)
+        if self.active_notes[hand] is not None:
+            self.fs.noteoff(channel, self.active_notes[hand])
 
-        # Start new note
-        self.fs.noteon(0, midi, 100)
-        self.current_note = midi
+        self.fs.noteon(channel, midi, 100)
+        self.active_notes[hand] = midi
 
-    def stop_note(self):
-        if self.current_note is not None:
-            self.fs.noteoff(0, self.current_note)
-            self.current_note = None
+    def stop_note(self, hand):
+        channel = self.left_channel if hand == "left" else self.right_channel
+
+        if self.active_notes[hand] is not None:
+            self.fs.noteoff(channel, self.active_notes[hand])
+            self.active_notes[hand] = None
 
     def stop_synth(self):
-        self.stop_note()
+        self.stop_note("left")
+        self.stop_note("right")
         self.fs.delete()

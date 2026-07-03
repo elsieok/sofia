@@ -1,0 +1,23 @@
+[project]
+name = "sofia"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "elsieok",email = "157172705+elsieok@users.noreply.github.com"}
+]
+requires-python = ">=3.12"
+dependencies = [
+    "opencv-python (>=4.13.0.92,<5.0.0.0)",
+    "mediapipe (>=0.10.35,<0.11.0)",
+    "numpy (>=2.5.0,<3.0.0)",
+    "pandas (>=3.0.3,<4.0.0)",
+    "scikit-learn (>=1.9.0,<2.0.0)",
+    "streamlit (>=1.58.0,<2.0.0)",
+    "pyfluidsynth (>=1.4.0,<2.0.0)",
+    "tensorflow (>=2.21.0,<3.0.0)",
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
